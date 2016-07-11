@@ -8,6 +8,7 @@
 # o 10.9 (starting with Developer Preview 4)
 # o 10.10
 # o 10.11
+# o 10.12 (up to Public Beta 1)
 #
 # Note: "IA" below does not stand for Intel Architecture, it stands for Install
 # Assistant.
@@ -123,17 +124,9 @@ fi
 prelinkedKernelB="`basename "$prelinkedKernel"`"
 
 # A new booter System/Library/CoreServices/bootbase.efi was introduced in
-# Mac OS 10.11 Public Beta 1. Apple recommends we use it going forward, but we
-# make an exception for Public Beta 1 to match the behavior of
-# createinstallmedia. We can remove this exception after Mac OS 10.11 is
-# released.
+# Mac OS 10.11 Public Beta 1. Apple recommends we use it going forward.
 booter=System/Library/CoreServices/bootbase.efi
-if [ -r "$baseMnt"/"$booter" ]; then
-   if grep -q -a 'Fri Jun 26 21:04:50 PDT 2015' "$baseMnt"/"$booter"; then
-      # Mac OS 10.11 Public Beta 1
-      booter=usr/standalone/i386/boot.efi
-   fi
-else
+if [ ! -r "$baseMnt"/"$booter" ]; then
    booter=System/Library/CoreServices/boot.efi
 fi
 
@@ -225,7 +218,23 @@ EOF
 
 hardlink() {
    mkdir -p "`dirname "$outputMnt"/"$2"`"
+
+   # "ln" fails with "Operation not permitted" (even for the super user) if the
+   # source's uchg (user immutable) flag is set.
+
+   local flags=`ls -lO@ "$outputMnt"/"$1" | awk '{ print $5 }'`
+
+   if echo "$flags" | grep -q uchg; then
+      # The uchg flag is set. Temporarily clear it to allow "ln" to succeed.
+      chflags nouchg "$outputMnt"/"$1"
+   fi
+
    ln "$outputMnt"/"$1" "$outputMnt"/"$2"
+
+   if echo "$flags" | grep -q uchg; then
+      # The uchg flag was set. Restore it.
+      chflags uchg "$outputMnt"/"$1"
+   fi
 }
 
 hardlink System/Library/CoreServices/boot.efi \
@@ -245,6 +254,7 @@ hardlink System/Library/CoreServices/SystemVersion.plist \
 
 #
 # Copy the bulky installer .app bundle.
+# The copy must preserve symbolic links (see bug 1677798).
 #
 
 cp -a "$inputApp" "$outputMnt"
