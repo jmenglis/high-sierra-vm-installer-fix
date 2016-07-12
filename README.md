@@ -12,3 +12,4 @@ You should be able to drag and drop the .app onto Fusion to begin the installati
 If you're still having problems a reboot sometimes helps.
 
 
+There's more info on usage at our blog post [here](http://blogs.vmware.com/teamfusion/2016/06/fix-for-installing-macos-sierra-as-a-vm.html)
