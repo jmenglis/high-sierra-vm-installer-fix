@@ -267,7 +267,9 @@ cp -a "$inputApp" "$outputMnt"
    -label "$volName"
 
 # Delete unnecessary stuff that might have been created by Finder.
-chmod u+r "$outputMnt"/.Trashes
+if [[ -e  "$outputMnt"/.Trashes ]]; then
+  chmod u+r "$outputMnt"/.Trashes
+fi
 rm -rf "$outputMnt"/.{DS_Store,Spotlight-V100,Trashes,fseventsd}
 
 # Synchronize "$outputDmg".
