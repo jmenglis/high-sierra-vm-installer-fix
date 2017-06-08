@@ -9,6 +9,7 @@
 # o 10.10
 # o 10.11
 # o 10.12 (up to Public Beta 1)
+# o 10.13
 #
 # Note: "IA" below does not stand for Intel Architecture, it stands for Install
 # Assistant.
@@ -78,8 +79,12 @@ hdiutil \
 
 # Mount BaseSystem.dmg so we can access files inside.
 # This fails if the image is already mounted somewhere else.
+baseDmg="$inputApp"/Contents/SharedSupport/BaseSystem.dmg
+if [ ! -r "$baseDmg" ]; then
+   baseDmg="$installMnt"/BaseSystem.dmg
+fi
 hdiutil \
-   attach "$installMnt"/BaseSystem.dmg \
+   attach "$baseDmg" \
    -mountpoint "$baseMnt" \
    -nobrowse \
    -noverify \
@@ -172,7 +177,7 @@ copyRel() {
 }
 
 copyRel "$prelinkedKernel" \
-        System/Library/Caches/com.apple.kext.caches/Startup/"$prelinkedKernelB"
+        "$prelinkedKernel"
 copyRel System/Library/CoreServices/PlatformSupport.plist \
         System/Library/CoreServices/PlatformSupport.plist
 copyRel "$booter" \
@@ -194,7 +199,7 @@ cat <<EOF >"$f"
 	<key>Kernel Cache</key>
 	<string>/.IABootFiles/$prelinkedKernelB</string>
 	<key>Kernel Flags</key>
-	<string>container-dmg=file:///$inputAppU/Contents/SharedSupport/InstallESD.dmg root-dmg=file:///BaseSystem.dmg</string>
+	<string>root-dmg=file:///$inputAppU/Contents/SharedSupport/BaseSystem.dmg</string>
 </dict>
 </plist>
 EOF
@@ -241,7 +246,7 @@ hardlink System/Library/CoreServices/boot.efi \
    usr/standalone/i386/boot.efi
 hardlink System/Library/CoreServices/boot.efi \
    .IABootFiles/boot.efi
-hardlink System/Library/Caches/com.apple.kext.caches/Startup/"$prelinkedKernelB" \
+hardlink "$prelinkedKernel" \
    .IABootFiles/"$prelinkedKernelB"
 hardlink System/Library/CoreServices/PlatformSupport.plist \
    .IABootFiles/PlatformSupport.plist
@@ -267,8 +272,8 @@ cp -a "$inputApp" "$outputMnt"
    -label "$volName"
 
 # Delete unnecessary stuff that might have been created by Finder.
-if [[ -e  "$outputMnt"/.Trashes ]]; then
-  chmod u+r "$outputMnt"/.Trashes
+if [ -e "$outputMnt"/.Trashes ]; then
+   chmod u+r "$outputMnt"/.Trashes
 fi
 rm -rf "$outputMnt"/.{DS_Store,Spotlight-V100,Trashes,fseventsd}
 

@@ -1,6 +1,4 @@
-## UPDATE: This fix is no longer required if you have Fusion 8.5, the fix is included ##
-
-This file resolves a failure when creating a new VM from the "Install 10.12 Developer Preview.app" 
+This file resolves a failure when creating a new VM from the "Install macOS 10.13 Beta.app"
 
 The file "Create Mavericks Installer.tool" must replace the existing one located in: /Applications/VMware Fusion.app/Contents/Library/
 
